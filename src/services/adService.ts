@@ -73,29 +73,37 @@ export async function fetchBusanWeddingAds(): Promise<{ ads: WeddingAd[]; totalC
     // 내부 프록시 실패 시 통과
   }
 
-  // 2차 시도: 만약 프록시에서 데이터를 못 가져왔다면 직접 CPAAD API 호출 시도
+  // 2차 시도: 만약 프록시에서 데이터를 못 가져왔다면 CORS 프록시 및 직접 호출 시도
   if (rawAds.length === 0) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3500);
-      const res = await fetch('https://cpaad.co.kr/api/ad_json.php', { signal: controller.signal });
-      clearTimeout(timeoutId);
+    const fetchEndpoints = [
+      'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://cpaad.co.kr/api/ad_json.php'),
+      'https://cpaad.co.kr/api/ad_json.php'
+    ];
 
-      if (res.ok) {
-        const data: AdApiResponse = await res.json();
-        if (data && data.advertisements) {
-          if (Array.isArray(data.advertisements)) {
-            rawAds = data.advertisements;
-          } else if (typeof data.advertisements === 'object') {
-            rawAds = Object.values(data.advertisements).flat();
-          }
-          if (rawAds.length > 0) {
-            isLive = true;
+    for (const endpoint of fetchEndpoints) {
+      if (rawAds.length > 0) break;
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        const res = await fetch(endpoint, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        if (res.ok) {
+          const data: AdApiResponse = await res.json();
+          if (data && data.advertisements) {
+            if (Array.isArray(data.advertisements)) {
+              rawAds = data.advertisements;
+            } else if (typeof data.advertisements === 'object') {
+              rawAds = Object.values(data.advertisements).flat();
+            }
+            if (rawAds.length > 0) {
+              isLive = true;
+            }
           }
         }
+      } catch {
+        // 다음 엔드포인트 또는 폴백으로 전환
       }
-    } catch {
-      // 직접 호출도 네트워크 이슈일 경우 폴백으로 전환
     }
   }
 

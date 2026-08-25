@@ -2,5 +2,7 @@
   "name": "부산 웨딩박람회 일정 안내",
   "description": "부산 웨딩박람회 실시간 일정, 무료초대권 신청, 혜택 안내 및 결혼준비 체크리스트 가이드",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }
